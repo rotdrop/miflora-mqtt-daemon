@@ -28,7 +28,8 @@ parameters = OrderedDict([
     (MI_TEMPERATURE, dict(name="AirTemperature", name_pretty='Air Temperature', typeformat='%.1f', unit='°C', device_class="temperature")),
     (MI_MOISTURE, dict(name="SoilMoisture", name_pretty='Soil Moisture', typeformat='%d', unit='%', device_class="humidity")),
     (MI_CONDUCTIVITY, dict(name="SoilConductivity", name_pretty='Soil Conductivity/Fertility', typeformat='%d', unit='µS/cm')),
-    (MI_BATTERY, dict(name="Battery", name_pretty='Sensor Battery Level', typeformat='%d', unit='%', device_class="battery"))
+    (MI_BATTERY, dict(name="Battery", name_pretty='Sensor Battery Level', typeformat='%d', unit='%', device_class="battery")),
+    ('gateway', dict(name="gateway", name_pretty='Bluetooth Plant Gateway', typeformat='%s')),
 ])
 
 if False:
@@ -332,7 +333,8 @@ elif reporting_mode == 'homeassistant-mqtt':
             payload = OrderedDict()
             payload['name'] = "{} {}".format(flora_name, sensor.title())
             payload['unique_id'] = "{}-{}".format(flora['mac'].lower().replace(":", ""), sensor)
-            payload['unit_of_measurement'] = params['unit']
+            if 'unit' in params:
+                payload['unit_of_measurement'] = params['unit']
             if 'device_class' in params:
                 payload['device_class'] = params['device_class']
             payload['state_topic'] = state_topic
@@ -420,7 +422,10 @@ while True:
             flora['stats']['success'] += 1
 
         for param,_ in parameters.items():
+            if param == 'gateway':
+                continue
             data[param] = flora['poller'].parameter_value(param)
+        data['gateway'] = 'anaxagoras'
         print_line('Result: {}'.format(json.dumps(data)))
 
         if reporting_mode == 'mqtt-json':
